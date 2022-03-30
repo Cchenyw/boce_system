@@ -1,4 +1,5 @@
 import datetime
+import os
 import time
 import re
 
@@ -22,16 +23,26 @@ def date_judge(mission_name):
         return mission_name
 
 
+# 获取最新的文件
+def get_old_file(file_path):
+    file_list = os.listdir(file_path)
+    file_list.sort(key=lambda f: os.path.getmtime(file_path + os.sep + f))
+    print('last fix:' + file_list[-1])
+    return file_path + '/' + file_list[-1]
+
+
 def update_mission_name(file_path):
     # 这里要加上文件名称，实现每日新增一份任务清单，增量保存
-    df_missions = pd.read_excel(f'{file_path}/old_file_name', index_col=False)
+    df_missions = pd.read_excel(get_old_file(f'{file_path}/mission-settings'), index_col=False)
     df_missions['任务名称'] = df_missions['任务名称'].apply(lambda x: date_judge(x))
     print(df_missions)
-    df_missions.to_excel(f'{file_path}/new_file_name', index=False)
-    return f'{file_path}/new_file_name'
+    file_name = f'mission-setting-{time.strftime("%Y%m%d")}.xlsx'
+    df_missions.to_excel(f'{file_path}/mission-settings/{file_name}', index=False)
+    return file_name
 
 
-def upload_mission(excel_file, cookies):
+def upload_mission(file_path, cookies):
+    excel_file = open(get_old_file(f'{file_path}/mission-settings'), 'rb')
     return requests.post('http://39.97.99.199/api/task/upload', headers={'Cookie': cookies}, files={'file': excel_file})
 
 
@@ -50,16 +61,53 @@ def is_all_complete(cookies):
         return False
 
 
+# count未完成任务数
+def remain_missions(cookies):
+    res = requests.get('http://39.97.99.199/api/tasks/joined?begin=0&end=10', headers={
+        'Cookie': cookies
+    })
+    return res.json()['total']
+
+
 def start_mission():
     pass
 
 
+def download_call_detail(file_path, cookies):
+    year = time.localtime().tm_year
+    month = time.localtime().tm_mon
+    day = time.localtime().tm_mday
+    begin = time.mktime((year, month, day, 0, 0, 0, 0, 0, 0))
+    end = time.mktime((year, month, day, 9, 9, 9, 9, 9, 9))
+    res = requests.get(
+        'http://39.97.99.199/api/call-detail/batch/excel/download?page=1&page_size=10&call_begin=1648569600000&call_end=1648655999999&sort_field=start&sort_dire=desc',
+        headers={
+            'Cookie': cookies
+        }, params={
+            'page': 1,
+            'page_size': 250,
+            'call_begin': begin,
+            'call_end': end,
+            'sort_field': 'start',
+            'sort_dire': 'desc'
+        }, stream=True)
+    if res.status_code == 200:
+        filename = f'call-detail-{time.strftime("%Y%m%d")}.xlsx'
+        with open(f'{file_path}/call-details/{filename}', 'wb') as f:
+            for chunk in res.iter_content(1024):
+                f.write(chunk)
+
+
 if __name__ == "__main__":
-    windows_path = 'C:/Users/TUNGEE/Downloads/phone-number-template.xlsx'
-    mac_path = '/Users/chenyw/Downloads/phone-number-template(1).xlsx'
-    cookie = 'remember_token=6242bdca8b98ed524818a927|a9a2afe0ccdd1da24e54ffef3c020770ffda34fa8e6f228b25c00b80b9cca6805cb1a85be609ef2deecfead584118ab9cddd040da16a269c646fd7f10139ef10; sessionId=.eJxFzk9rAjEQBfDvkrOUyZ-dJN4KailUhVYo7GVJZiao3V3B2Eot_e5dvPT4Hu8H70eNItzV9CXd5dRxVvOS-ioz1ZWz1P1_PLCaK9LBlOi8drokazW4YrSGhtByDNZg8mC4UEYPlorh3MTEPgpqLZiFxVCK2Tu2JmpvEUjAJmwEUYxmJABMTOQDoQ-sLUCi5BvPbL1GNVNnGWTIcu6q0GnkquYBHcADzNRnner7TzTOZKYUcgzCjXFBhxSNn3y9DzbHZ7PZLb_Xw_Kyvj3e2jeAzbA6vOz6vj1-XNodme3TamjfXw_bBV0nSPs0jtJP-CpZ_f4BfzpeAw.YkMxNg.SiHf752V_wpJ355-fjNMMwqrpvA'
-    # update_mission_name(mac_path)
-    # ex_file = open(mac_path, 'rb')
-    # r = upload_mission(ex_file, cookie)
-    # print(r.json())
-    print(is_all_complete(cookie))
+    windows_path = 'C:/Users/TUNGEE/Desktop/项目/中国通信院-拨测系统'
+    mac_path = '/Users/chenyw/Downloads'
+    cookie = 'remember_token=6242bdca8b98ed524818a927|a9a2afe0ccdd1da24e54ffef3c020770ffda34fa8e6f228b25c00b80b9cca6805cb1a85be609ef2deecfead584118ab9cddd040da16a269c646fd7f10139ef10; sessionId=.eJxFjstqwzAQRf9Fa1NGsh6jbOsSCnW8cQjtxow0oyYlcSBKW0Lpv9dk0-U9nAP3R80iPFX6kul6njipVaFjlUZN5SJ1_z8PrFYKiKm1GiwV9jbmiAEjQio2tK32YqMOwRaK2iEvhCQCJ_LaeYckpYQAPptFF0HMkh1pT2KCLt6AJusjGAAX2XvXao2mJYqMLbmUPRvVqIuc5JTkMlXJ55mrWqG3AA_QqM-64PtPb6xJnAlTRGFnLGqkaMLS17vwtu7NsNva1_H92o98GB4BhnF_eNk9677L1826d5vu6TZ021v_sXVLmPc0z3Jc4m9J6vcP8EVcIA.YkO2_g.jkLRo5bx2uYuO40EiZcfm17wBQw'
+    update_mission_name(windows_path)
+    r = upload_mission(windows_path, cookie)
+    print(r.json())
+    print('is all complete:' + str(is_all_complete(cookie)))
+    time.sleep(60)
+    while not (is_all_complete(cookie)):
+        time.sleep(20)
+        print(f'任务未完成,剩余:{remain_missions(cookie)}')
+    download_call_detail(windows_path, cookie)
