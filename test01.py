@@ -98,16 +98,48 @@ def download_call_detail(file_path, cookies):
                 f.write(chunk)
 
 
+def analysis_result(file_path):
+    df = pd.read_excel(get_old_file(f'{file_path}/call-details'))
+    UC_passed_ratio = calc_pass_ratio(df, 'v2_UC', '通过')
+    taobao_passed_ratio = calc_pass_ratio(df, 'v2淘宝天猫', '通过')
+    xianyu_passed_ratio = calc_pass_ratio(df, 'v2_闲鱼', '通过')
+    gaode_passed_ratio = calc_pass_ratio(df, 'v2_高德', '通过')
+    dingding_passed_ratio = calc_pass_ratio(df, 'v2_钉钉', '通过')
+    result = {
+        'UC_passed_ratio': UC_passed_ratio,
+        'taobao_passed_ratio': taobao_passed_ratio,
+        'xianyu_passed_ratio': xianyu_passed_ratio,
+        'gaode_passed_ratio': gaode_passed_ratio,
+        'dingding_passed_ratio': dingding_passed_ratio
+    }
+    print(result)
+    df['UC通过率'] = UC_passed_ratio
+    df['淘宝通过率'] = taobao_passed_ratio
+    df['闲鱼通过率'] = xianyu_passed_ratio
+    df['高德通过率'] = gaode_passed_ratio
+    df['钉钉通过率'] = dingding_passed_ratio
+    file_name = f'result-{time.strftime("%Y%m%d")}.xlsx'
+    df.to_excel(f'{file_path}/results/{file_name}', index=False)
+
+
+def calc_pass_ratio(df, company_name, test_result):
+    passed_call = df[(df['对应企业'] == f'{company_name}') & (df['测试结果'] == f'{test_result}')]
+    all_call = df[(df['对应企业'] == f'{company_name}')]
+    return len(passed_call) / len(all_call)
+
+
 if __name__ == "__main__":
     windows_path = 'C:/Users/TUNGEE/Desktop/项目/中国通信院-拨测系统'
     mac_path = '/Users/chenyw/Downloads'
     cookie = 'remember_token=6242bdca8b98ed524818a927|a9a2afe0ccdd1da24e54ffef3c020770ffda34fa8e6f228b25c00b80b9cca6805cb1a85be609ef2deecfead584118ab9cddd040da16a269c646fd7f10139ef10; sessionId=.eJxFjstqwzAQRf9Fa1NGsh6jbOsSCnW8cQjtxow0oyYlcSBKW0Lpv9dk0-U9nAP3R80iPFX6kul6njipVaFjlUZN5SJ1_z8PrFYKiKm1GiwV9jbmiAEjQio2tK32YqMOwRaK2iEvhCQCJ_LaeYckpYQAPptFF0HMkh1pT2KCLt6AJusjGAAX2XvXao2mJYqMLbmUPRvVqIuc5JTkMlXJ55mrWqG3AA_QqM-64PtPb6xJnAlTRGFnLGqkaMLS17vwtu7NsNva1_H92o98GB4BhnF_eNk9677L1826d5vu6TZ021v_sXVLmPc0z3Jc4m9J6vcP8EVcIA.YkO2_g.jkLRo5bx2uYuO40EiZcfm17wBQw'
-    update_mission_name(windows_path)
-    r = upload_mission(windows_path, cookie)
-    print(r.json())
+    # update_mission_name(windows_path)
+    # r = upload_mission(windows_path, cookie)
+    # print(r.json())
     print('is all complete:' + str(is_all_complete(cookie)))
-    time.sleep(60)
+    time.sleep(120)
     while not (is_all_complete(cookie)):
-        time.sleep(20)
-        print(f'任务未完成,剩余:{remain_missions(cookie)}')
+        print(f'任务未完成,完成进度:{((250 - remain_missions(cookie)) / 250) * 100}%,剩余:{remain_missions(cookie)}个')
+        time.sleep(360)
     download_call_detail(windows_path, cookie)
+    time.sleep(60)
+    analysis_result(windows_path)
