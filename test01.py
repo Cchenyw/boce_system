@@ -132,9 +132,9 @@ if __name__ == "__main__":
     windows_path = 'C:/Users/TUNGEE/Desktop/项目/中国通信院-拨测系统'
     mac_path = '/Users/chenyw/Downloads'
     cookie = 'remember_token=6242bdca8b98ed524818a927|a9a2afe0ccdd1da24e54ffef3c020770ffda34fa8e6f228b25c00b80b9cca6805cb1a85be609ef2deecfead584118ab9cddd040da16a269c646fd7f10139ef10; sessionId=.eJxFjstqwzAQRf9Fa1NGsh6jbOsSCnW8cQjtxow0oyYlcSBKW0Lpv9dk0-U9nAP3R80iPFX6kul6njipVaFjlUZN5SJ1_z8PrFYKiKm1GiwV9jbmiAEjQio2tK32YqMOwRaK2iEvhCQCJ_LaeYckpYQAPptFF0HMkh1pT2KCLt6AJusjGAAX2XvXao2mJYqMLbmUPRvVqIuc5JTkMlXJ55mrWqG3AA_QqM-64PtPb6xJnAlTRGFnLGqkaMLS17vwtu7NsNva1_H92o98GB4BhnF_eNk9677L1826d5vu6TZ021v_sXVLmPc0z3Jc4m9J6vcP8EVcIA.YkO2_g.jkLRo5bx2uYuO40EiZcfm17wBQw'
-    # update_mission_name(windows_path)
-    # r = upload_mission(windows_path, cookie)
-    # print(r.json())
+    update_mission_name(windows_path)
+    r = upload_mission(windows_path, cookie)
+    print(r.json())
     print('is all complete:' + str(is_all_complete(cookie)))
     time.sleep(120)
     while not (is_all_complete(cookie)):
