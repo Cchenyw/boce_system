@@ -80,7 +80,7 @@ def download_call_detail(file_path, cookies):
     begin = time.mktime((year, month, day, 0, 0, 0, 0, 0, 0))
     end = time.mktime((year, month, day, 9, 9, 9, 9, 9, 9))
     res = requests.get(
-        'http://39.97.99.199/api/call-detail/batch/excel/download?page=1&page_size=10&call_begin=1648569600000&call_end=1648655999999&sort_field=start&sort_dire=desc',
+        'http://39.97.99.199/api/call-detail/batch/excel/download',
         headers={
             'Cookie': cookies
         }, params={
@@ -136,10 +136,10 @@ if __name__ == "__main__":
     r = upload_mission(windows_path, cookie)
     print(r.json())
     print('is all complete:' + str(is_all_complete(cookie)))
-    time.sleep(120)
+    time.sleep(360)
     while not (is_all_complete(cookie)):
         print(f'任务未完成,完成进度:{((250 - remain_missions(cookie)) / 250) * 100}%,剩余:{remain_missions(cookie)}个')
         time.sleep(360)
     download_call_detail(windows_path, cookie)
-    time.sleep(60)
+    time.sleep(15)
     analysis_result(windows_path)
