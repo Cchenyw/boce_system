@@ -78,7 +78,8 @@ def download_call_detail(file_path, cookies):
     month = time.localtime().tm_mon
     day = time.localtime().tm_mday
     begin = time.mktime((year, month, day, 0, 0, 0, 0, 0, 0))
-    end = time.mktime((year, month, day, 9, 9, 9, 9, 9, 9))
+    end = time.mktime((year, month, day, 23, 59, 59, 0, 0, 0))
+    print(f'{begin}, {end}')
     res = requests.get(
         'http://39.97.99.199/api/call-detail/batch/excel/download',
         headers={
@@ -86,8 +87,8 @@ def download_call_detail(file_path, cookies):
         }, params={
             'page': 1,
             'page_size': 250,
-            'call_begin': begin,
-            'call_end': end,
+            'call_begin': 1649347200000,
+            'call_end': 1649433599000,
             'sort_field': 'start',
             'sort_dire': 'desc'
         }, stream=True)
@@ -96,6 +97,9 @@ def download_call_detail(file_path, cookies):
         with open(f'{file_path}/call-details/{filename}', 'wb') as f:
             for chunk in res.iter_content(1024):
                 f.write(chunk)
+        print('download success')
+    else:
+        print(res.json())
 
 
 def analysis_result(file_path):
